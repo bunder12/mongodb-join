@@ -1,0 +1,39 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const app = express();
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const update = require('./src/router')
+const User = require("./src/modelUser")
+require('dotenv').config()
+
+
+mongoose.connect(process.env.URL, function(err, db) {
+    if (err) throw err;
+    db.collection('users').aggregate([
+     { $lookup:
+        {
+          from: 'makanans',
+          localField: 'order_id',
+          foreignField: '_id',
+          as: 'orderdetails'
+        }
+      }
+    ]).toArray(function(err, res) {
+      if (err) throw err;
+      const data = JSON.stringify(res)
+      console.log(data)
+      // db.close();
+      app.use(cors())
+      app.use(bodyParser.json());
+      app.use('/', (req, res) => {
+        res.send(JSON.parse(data))
+      });
+    });
+
+
+    app.listen(process.env.PORT, (req, res) => {
+      console.log(`server run port ${process.env.PORT}`)
+    })
+
+  });
